@@ -22,7 +22,7 @@ A simple Progressive Web Application (PWA) designed to simplify PG management.
 - PWABuilder
 
 ## Live Demo
-https://sharmapg1.pages.dev
+https://pgmanager.pages.dev/
 
 ## GitHub Repository
 https://github.com/kartavya-02/PG-Manager
