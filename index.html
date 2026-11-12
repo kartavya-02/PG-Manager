@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e4d2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PG">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PG</title>
+<style>
+:root{
+  --deep:#0e4d2e; --green:#1b7f4b; --green-soft:#e3f1e8;
+  --paper:#f4f7f1; --card:#ffffff; --ink:#14261c; --mute:#5d6e63; --line:#d6e0d2;
+  --due:#b45309; --due-bg:#fff3df; --bad:#b3261e;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;background:var(--paper);color:var(--ink);font-size:17px;line-height:1.35}
+#app{max-width:520px;margin:0 aFuto;min-height:100vh;display:flex;flex-direction:column}
+
+.top{background:var(--deep);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 16px;position:sticky;top:0;z-index:5}
+.top h1{margin:0;font-size:23px;letter-spacing:.2px}
+.top p{margin:2px 0 0;font-size:15px;opacity:.82}
+.monthbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.monthbar button{width:58px;height:48px;border-radius:14px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:26px;line-height:1}
+.monthbar button:active{background:rgba(255,255,255,.3)}
+.monthbar strong{font-size:19px;font-weight:650}
+
+main{flex:1;padding:14px 14px 120px}
+h2{font-size:19px;margin:20px 2px 10px}
+.hint{color:var(--mute);font-size:15px;margin:4px 2px 12px}
+
+.card{background:var(--card);border:1px solid var(--line);border-left-width:7px;border-radius:18px;padding:14px 14px 14px;margin-bottom:12px}
+.card.is-due{border-left-color:var(--due)}
+.card.is-paid{border-left-color:var(--green)}
+.card.plain{border-left-width:1px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card h3{margin:0;font-size:19px}
+.sub{margin:3px 0 0;color:var(--mute);font-size:15px}
+.amt{font-size:23px;font-weight:700;white-space:nowrap}
+.is-due .amt{color:var(--due)}
+.is-paid .amt{color:var(--green)}
+.split{margin:8px 0 12px;font-size:15px;color:var(--mute)}
+.warn{margin:0 0 10px;font-size:14px;color:var(--bad)}
+.actions{display:grid;gap:10px}
+
+.summary{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.summary .big{font-size:38px;font-weight:750;color:var(--due);line-height:1.1}
+.summary .big.zero{color:var(--green)}
+.summary .small{color:var(--mute);font-size:15px;margin-top:4px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;padding:0 16px;border-radius:16px;border:2px solid transparent;font:inherit;font-size:18px;font-weight:650;text-decoration:none;cursor:pointer;text-align:center}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--green);color:#fff}
+.btn.wa{background:#25d366;color:#05300f}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.small{min-height:48px;font-size:16px}
+.chip{display:inline-block;padding:4px 12px;border-radius:99px;font-size:14px;font-weight:650;background:var(--green-soft);color:var(--green)}
+
+label{display:block;font-size:15px;font-weight:600;margin:12px 0 5px}
+input{width:100%;height:54px;padding:0 14px;border:2px solid var(--line);border-radius:14px;font:inherit;font-size:19px;background:#fff;color:var(--ink)}
+input:focus{outline:3px solid #9bd1b0;border-color:var(--green)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bill{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--green-soft);font-size:17px;font-weight:600}
+.bill.pending{background:#eef0ec;color:var(--mute);font-weight:500}
+.bill.err{background:#fde8e6;color:var(--bad)}
+
+.empty{text-align:center;padding:36px 10px 10px;color:var(--mute)}
+.empty b{display:block;color:var(--ink);font-size:20px;margin-bottom:6px}
+.empty .btn{margin-top:18px}
+
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{min-height:70px;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--mute);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav button .ic{font-size:24px;line-height:1}
+nav button.on{color:var(--deep);background:var(--green-soft)}
+
+dialog{border:0;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:520px;margin:auto auto 0;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{margin:0 0 4px}
+dialog .actions{margin-top:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#14261c;color:#fff;padding:12px 18px;border-radius:14px;font-size:16px;max-width:90%;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}.btn:active{transform:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <h1 id="pgName"></h1>
+    <p id="greet"></p>
+    <div class="monthbar" id="monthbar">
+      <button data-act="prevMonth" aria-label="Previous month">‹</button>
+      <strong id="monthLabel"></strong>
+      <button data-act="nextMonth" aria-label="Next month">›</button>
+    </div>
+  </div>
+  <main id="view"></main>
+  <nav id="nav">
+    <button data-tab="rent"><span class="ic">₹</span>Rent</button>
+    <button data-tab="bijli"><span class="ic">⚡</span>Electricity</button>
+    <button data-tab="tenants"><span class="ic">👥</span>Tenants</button>
+    <button data-tab="Profile"><span class="ic">👤</span>Profile</button>
+  </nav>
+</div>
+
+<dialog id="dlg">
+  <form id="tform" autocomplete="off">
+    <h2 id="dlgTitle">New tenant</h2>
+    <label for="f_name">Name</label>
+    <input id="f_name" required maxlength="60">
+    <div class="pair">
+      <div><label for="f_room">Room number</label><input id="f_room" required maxlength="12"></div>
+      <div><label for="f_rent">Monthly rent (₹)</label><input id="f_rent" type="number" inputmode="numeric" min="0" required></div>
+    </div>
+    <label for="f_phone">Phone number (WhatsApp)</label>
+    <input id="f_phone" type="tel" inputmode="tel" required maxlength="16" placeholder="98XXXXXXXX">
+    <div class="actions">
+      <button type="submit" class="btn primary">Save</button>
+      <button type="button" class="btn danger" id="delBtn" hidden data-act="del">Remove tenant</button>
+      <button type="button" class="btn ghost" data-act="closeDlg">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- Data ---------- */
+const KEY = 'sharma-pg-data-v1';
+const defaults = { owner:'YOUR NAME', pg:'PG NAME', rate:8, tenants:[], readings:{}, paid:{} };
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) return Object.assign(JSON.parse(JSON.stringify(defaults)), JSON.parse(raw));
+  }catch(e){}
+  return JSON.parse(JSON.stringify(defaults));
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ toast('Could not save data. Phone storage may be full.'); }
+}
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rupee = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? null : n; };
+const fmtUnits = u => String(Math.round(u * 100) / 100);
+const roomKey = r => String(r).trim().toUpperCase();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const pad = n => String(n).padStart(2, '0');
+
+let now = new Date();
+let month = now.getFullYear() + '-' + pad(now.getMonth() + 1);
+let tab = 'rent';
+let editingId = null;
+let installEvt = null;
+
+const monthLabel = m => { const [y, mo] = m.split('-'); return MONTHS[+mo - 1] + ' ' + y; };
+function shiftMonth(d){
+  let [y, m] = month.split('-').map(Number);
+  m += d;
+  if(m < 1){ m = 12; y--; }
+  if(m > 12){ m = 1; y++; }
+  month = y + '-' + pad(m);
+  render();
+}
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- Bijli maths ---------- */
+function getPrev(rk, m){
+  const e = (state.readings[m] || {})[rk];
+  if(e && e.prev !== undefined && e.prev !== '') return e.prev;
+  const keys = Object.keys(state.readings).filter(k => k < m).sort().reverse();
+  for(const k of keys){
+    const x = state.readings[k][rk];
+    if(x && x.curr !== undefined && x.curr !== '') return x.curr;
+  }
+  return '';
+}
+function roomBill(rk, m){
+  const e = (state.readings[m] || {})[rk] || {};
+  const curr = num(e.curr);
+  const prev = num(getPrev(rk, m));
+  if(curr === null) return { status:'pending', units:0, amount:0 };
+  if(prev === null) return { status:'noprev', units:0, amount:0 };
+  if(curr < prev) return { status:'error', units:0, amount:0 };
+  const units = curr - prev;
+  return { status:'ok', units, amount: Math.round(units * state.rate) };
+}
+function tenantsInRoom(rk){ return state.tenants.filter(t => roomKey(t.room) === rk); }
+function bijliFor(t){
+  const rk = roomKey(t.room);
+  const b = roomBill(rk, month);
+  if(b.status !== 'ok') return { amount:0, status:b.status, note:'' };
+  const n = tenantsInRoom(rk).length || 1;
+  const amount = Math.round(b.amount / n);
+  const note = n === 1 ? `${fmtUnits(b.units)} units × ₹${state.rate}` : `room bill ${rupee(b.amount)}, split among ${n} tenants`;
+  return { amount, status:'ok', note };
+}
+function billHtml(rk){
+  const b = roomBill(rk, month);
+  if(b.status === 'ok') return `<div class="bill">${fmtUnits(b.units)} units × ₹${state.rate} = <b>${rupee(b.amount)}</b></div>`;
+  if(b.status === 'error') return `<div class="bill err">Current reading is lower than the previous one. Please check.</div>`;
+  if(b.status === 'noprev') return `<div class="bill pending">Enter the previous reading too.</div>`;
+  return `<div class="bill pending">Enter the current reading to get the bill.</div>`;
+}
+
+/* ---------- WhatsApp ---------- */
+function waNumber(p){
+  let d = String(p).replace(/\D/g, '');
+  if(d.length > 10) d = d.slice(-10);
+  return '91' + d;
+}
+function waLink(t, rent, bj){
+  const lines = [
+    `Hello ${t.name},`,
+    `Your ${monthLabel(month)} dues (Room ${t.room}):`,
+    `Rent: ${rupee(rent)}`
+  ];
+  if(bj.amount > 0) lines.push(`Electricity: ${rupee(bj.amount)}${bj.note && bj.note.includes('units') ? ' (' + bj.note + ')' : ''}`);
+  lines.push(`Total: ${rupee(rent + bj.amount)}`, 'Please pay at your earliest convenience. Thank you.', `- ${state.pg}`);
+  return 'https://wa.me/' + waNumber(t.phone) + '?text=' + encodeURIComponent(lines.join('\n'));
+}
+
+/* ---------- Views ---------- */
+function sortRooms(a, b){ return String(a.room).localeCompare(String(b.room), 'en', { numeric:true }); }
+
+function renderRent(){
+  if(!state.tenants.length){
+    return `<div class="empty"><b>No tenants yet</b>Add a tenant first, then the rent summary will show up here.
+      <button class="btn primary" data-tab="tenants">Add tenant</button></div>`;
+  }
+  const paidMap = state.paid[month] || {};
+  const rows = state.tenants.map(t => {
+    const bj = bijliFor(t);
+    return { t, bj, total: (+t.rent || 0) + bj.amount, paid: !!paidMap[t.id] };
+  }).sort((a, b) => (a.paid - b.paid) || sortRooms(a.t, b.t));
+
+  const due = rows.filter(r => !r.paid), got = rows.filter(r => r.paid);
+  const dueSum = due.reduce((s, r) => s + r.total, 0);
+  const gotSum = got.reduce((s, r) => s + r.total, 0);
+
+  let html = `<div class="summary">
+    <div class="small">Due this month</div>
+    <div class="big ${dueSum ? '' : 'zero'}">${dueSum ? rupee(dueSum) : 'All paid ✓'}</div>
+    <div class="small">${due.length} pending, ${got.length} paid (${rupee(gotSum)})</div>
+  </div>`;
+
+  html += rows.map(r => {
+    const { t, bj, total, paid } = r;
+    const bijliLine = bj.status === 'ok' ? `Electricity ${rupee(bj.amount)}` : 'Electricity reading pending';
+    return `<article class="card ${paid ? 'is-paid' : 'is-due'}">
+      <div class="row">
+        <div><h3>${esc(t.name)}</h3><p class="sub">Room ${esc(t.room)}, ${esc(t.phone)}</p></div>
+        <div class="amt">${rupee(total)}</div>
+      </div>
+      <p class="split">Rent ${rupee(t.rent)} + ${bijliLine}</p>
+      ${!paid && bj.status === 'error' ? '<p class="warn">The electricity reading for this room looks wrong.</p>' : ''}
+      <div class="actions">
+        ${paid
+          ? `<div><span class="chip">Paid ✓</span></div>
+             <button class="btn ghost small" data-act="unpaid" data-id="${esc(t.id)}">Mark as pending</button>`
+          : `<button class="btn primary" data-act="paid" data-id="${esc(t.id)}">Mark as paid ✓</button>
+             <a class="btn wa" target="_blank" rel="noopener" href="${waLink(t, +t.rent || 0, bj)}">Send on WhatsApp</a>`}
+      </div>
+    </article>`;
+  }).join('');
+  return html;
+}
+
+function renderBijli(){
+  const map = new Map();
+  [...state.tenants].sort(sortRooms).forEach(t => {
+    const k = roomKey(t.room);
+    if(!map.has(k)) map.set(k, { label:t.room, names:[] });
+    map.get(k).names.push(t.name);
+  });
+  if(!map.size){
+    return `<div class="empty"><b>No rooms yet</b>Rooms appear here once you add tenants.
+      <button class="btn primary" data-tab="tenants">Add tenant</button></div>`;
+  }
+  let html = `<p class="hint">Rate: ₹${state.rate} per unit (change it in the Profile tab). The bill is calculated as you type.</p>`;
+  for(const [rk, r] of map){
+    const e = (state.readings[month] || {})[rk] || {};
+    html += `<article class="card plain" data-roomcard="${esc(rk)}">
+      <h3>Room ${esc(r.label)}</h3>
+      <p class="sub">${esc(r.names.join(', '))}</p>
+      <div class="pair">
+        <div><label>Previous reading</label>
+          <input inputmode="decimal" data-room="${esc(rk)}" data-f="prev" value="${esc(getPrev(rk, month))}" placeholder="0"></div>
+        <div><label>Current reading</label>
+          <input inputmode="decimal" data-room="${esc(rk)}" data-f="curr" value="${esc(e.curr ?? '')}" placeholder="0"></div>
+      </div>
+      <div data-bill="${esc(rk)}">${billHtml(rk)}</div>
+    </article>`;
+  }
+  return html;
+}
+
+function renderTenants(){
+  let html = `<button class="btn primary" data-act="add">+ Add new tenant</button><h2>Rooms and tenants (${state.tenants.length})</h2>`;
+  if(!state.tenants.length){
+    return html + `<div class="empty"><b>The list is empty</b>Tap the button above to add your first tenant.</div>`;
+  }
+  html += [...state.tenants].sort(sortRooms).map(t => `
+    <article class="card plain">
+      <div class="row">
+        <div><h3>${esc(t.name)}</h3><p class="sub">Room ${esc(t.room)}, ${esc(t.phone)}</p></div>
+        <div class="amt">${rupee(t.rent)}</div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn ghost small" data-act="edit" data-id="${esc(t.id)}">Edit</button>
+      </div>
+    </article>`).join('');
+  return html;
+}
+
+function renderProfile(){
+  return `
+    <h2>Settings</h2>
+    <label for="s_owner">Owner name</label>
+    <input id="s_owner" data-set="owner" value="${esc(state.owner)}" maxlength="40">
+    <label for="s_pg">PG name</label>
+    <input id="s_pg" data-set="pg" value="${esc(state.pg)}" maxlength="40">
+    <label for="s_rate">Electricity rate (₹ per unit)</label>
+    <input id="s_rate" data-set="rate" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(state.rate)}">
+
+    <h2>Backup</h2>
+    <p class="hint">All data is stored only on this phone. Before changing phones or uninstalling the app, export a backup file.</p>
+    <div class="actions">
+      <button class="btn primary" data-act="export">Export (download data)</button>
+      <button class="btn ghost" data-act="import">Import (restore data)</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      ${installEvt ? '<button class="btn ghost" data-act="install">Install app</button>' : ''}
+    </div>`;
+}
+
+function render(){
+  $('#pgName').textContent = state.pg;
+  $('#greet').textContent = 'Hello, ' + state.owner;
+  document.title = state.pg;
+  $('#monthLabel').textContent = monthLabel(month);
+  $('#monthbar').hidden = !(tab === 'rent' || tab === 'bijli');
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  const v = $('#view');
+  v.innerHTML = tab === 'rent' ? renderRent() : tab === 'bijli' ? renderBijli() : tab === 'tenants' ? renderTenants() : renderProfile();
+}
+
+/* ---------- Tenant dialog ---------- */
+function openDialog(id){
+  editingId = id || null;
+  const t = id ? state.tenants.find(x => x.id === id) : null;
+  $('#dlgTitle').textContent = t ? 'Edit tenant' : 'New tenant';
+  $('#f_name').value = t ? t.name : '';
+  $('#f_room').value = t ? t.room : '';
+  $('#f_rent').value = t ? t.rent : '';
+  $('#f_phone').value = t ? t.phone : '';
+  $('#delBtn').hidden = !t;
+  $('#dlg').showModal();
+}
+$('#tform').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const phoneDigits = $('#f_phone').value.replace(/\D/g, '');
+  if(phoneDigits.length < 10){ toast('Phone number must have 10 digits'); return; }
+  const rec = {
+    id: editingId || uid(),
+    name: $('#f_name').value.trim(),
+    room: $('#f_room').value.trim(),
+    rent: num($('#f_rent').value) || 0,
+    phone: $('#f_phone').value.trim()
+  };
+  if(!rec.name || !rec.room){ toast('Name and room number are required'); return; }
+  if(editingId) state.tenants = state.tenants.map(t => t.id === editingId ? rec : t);
+  else state.tenants.push(rec);
+  save();
+  $('#dlg').close();
+  toast('Saved');
+  render();
+});
+
+/* ---------- Backup ---------- */
+function exportData(){
+  const payload = { app:'sharma-pg', version:1, exportedAt:new Date().toISOString(), data:state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = URL.createObjectURL(blob);
+  a.download = `pg-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast('Backup file is downloading');
+}
+function cleanImport(d){
+  if(!d || !Array.isArray(d.tenants)) throw new Error('bad');
+  return {
+    owner: String(d.owner || defaults.owner),
+    pg: String(d.pg || defaults.pg),
+    rate: num(d.rate) ?? defaults.rate,
+    tenants: d.tenants.filter(t => t && t.name).map((t, i) => ({
+      id: String(t.id || uid() + i), name:String(t.name), room:String(t.room || ''),
+      phone:String(t.phone || ''), rent:num(t.rent) || 0
+    })),
+    readings: d.readings && typeof d.readings === 'object' ? d.readings : {},
+    paid: d.paid && typeof d.paid === 'object' ? d.paid : {}
+  };
+}
+function importFile(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const obj = JSON.parse(r.result);
+      const clean = cleanImport(obj.data || obj);
+      if(!confirm(`This file has ${clean.tenants.length} tenants. Current data will be replaced. Import?`)) return;
+      state = clean;
+      save();
+      toast('Data restored');
+      render();
+    }catch(e){
+      toast('This does not look like a valid backup file');
+    }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- Events ---------- */
+document.addEventListener('click', ev => {
+  const tabBtn = ev.target.closest('[data-tab]');
+  if(tabBtn){ tab = tabBtn.dataset.tab; render(); window.scrollTo(0, 0); return; }
+  const el = ev.target.closest('[data-act]');
+  if(!el) return;
+  const id = el.dataset.id;
+  switch(el.dataset.act){
+    case 'prevMonth': shiftMonth(-1); break;
+    case 'nextMonth': shiftMonth(1); break;
+    case 'paid':
+      (state.paid[month] = state.paid[month] || {})[id] = true;
+      save(); toast('Marked as paid'); render(); break;
+    case 'unpaid':
+      if(state.paid[month]) delete state.paid[month][id];
+      save(); toast('Marked as pending'); render(); break;
+    case 'add': openDialog(null); break;
+    case 'edit': openDialog(id); break;
+    case 'closeDlg': $('#dlg').close(); break;
+    case 'del': {
+      const t = state.tenants.find(x => x.id === editingId);
+      if(t && confirm(`Remove ${t.name}?`)){
+        state.tenants = state.tenants.filter(x => x.id !== editingId);
+        save(); $('#dlg').close(); toast('Tenant removed'); render();
+      }
+      break;
+    }
+    case 'export': exportData(); break;
+    case 'import': $('#importFile').click(); break;
+    case 'install':
+      if(installEvt){ installEvt.prompt(); installEvt = null; render(); }
+      break;
+  }
+});
+
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if(el.dataset.room){
+    const rk = el.dataset.room;
+    state.readings[month] = state.readings[month] || {};
+    const e = state.readings[month][rk] = state.readings[month][rk] || {};
+    e[el.dataset.f] = el.value;
+    save();
+    const box = document.querySelector(`[data-bill="${CSS.escape(rk)}"]`);
+    if(box) box.innerHTML = billHtml(rk);
+  }
+  if(el.dataset.set){
+    const k = el.dataset.set;
+    if(k === 'rate'){ const n = num(el.value); if(n !== null && n >= 0) state.rate = n; }
+    else state[k] = el.value;
+    save();
+    $('#pgName').textContent = state.pg || 'PG';
+    $('#greet').textContent = 'Hello, ' + state.owner;
+  }
+});
+
+document.addEventListener('change', ev => {
+  if(ev.target.id === 'importFile' && ev.target.files[0]){
+    importFile(ev.target.files[0]);
+    ev.target.value = '';
+  }
+});
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installEvt = e;
+  if(tab === 'Profile') render();
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+
+render();
+</script>
+</body>
+</html>
